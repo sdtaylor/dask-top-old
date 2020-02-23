@@ -16,6 +16,7 @@ class DaskSensor(Plugin):
         self.worker_info = self.client.scheduler_info()['workers']
         self.currentValue['Memory']['total_memory'] = round(self.available_memory() / (1024**2),2)
         self.currentValue['Memory']['used_memory']  = round(self.used_memory() / (1024**2),2)
+        self.currentValue['Memory']['used_memory_percent']  = self.currentValue['Memory']['used_memory'] / self.currentValue['Memory']['total_memory']
         self.currentValue['CPU']['cpu_usage'] = self.cpu_usage()
         self.currentValue['Cluster']['n_workers'] = self.num_workers()
         self.currentValue['Cluster']['total_threads'] = self.num_workers()

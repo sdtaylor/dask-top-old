@@ -436,14 +436,14 @@ class PtopGUI(npyscreen.NPSApp):
             ####  CPU Usage information ####
 
             cpu_canvas = drawille.Canvas()
-            next_peak_height = int(math.ceil((float(cpu_info['percentage'])/100)*self.CHART_HEIGHT))
+            next_peak_height = int(math.ceil((float(dask_cpu['cpu_usage'])/100)*self.CHART_HEIGHT))
             self.cpu_chart.value = (self.draw_chart(cpu_canvas,next_peak_height,'cpu'))
             self.cpu_chart.update(clear=True)
 
             #### Memory Usage information ####
 
             memory_canvas = drawille.Canvas()
-            next_peak_height = int(math.ceil((float(memory_info['percentage'])/100)*self.CHART_HEIGHT))
+            next_peak_height = int(math.ceil((float(dask_memory['used_memory_percent']))*self.CHART_HEIGHT))
             self.memory_chart.value = self.draw_chart(memory_canvas,next_peak_height,'memory')
             self.memory_chart.update(clear=True)
 
