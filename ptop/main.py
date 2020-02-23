@@ -73,7 +73,32 @@ def main():
 
         # command line argument parsing
         parser = argparse.ArgumentParser(description='ptop argument parser')
-        parser.add_argument('-t',
+        
+        parser.add_argument('-a','--address',
+                            dest='dask_address',
+                            action='store',
+                            type=str,
+                            required=True,
+                            help=
+                            '''
+                                dask-distributed scheduler address.
+                                
+                                ie. 127.0.0.1:324597
+                            ''')
+
+        parser.add_argument('-r','--refresh',
+                            dest='refresh',
+                            action='store',
+                            type=float,
+                            default=500,
+                            required=False,
+                            help=
+                            '''
+                                Refresh rate in milliseconds
+                                Default 500
+                            ''')
+                            
+        parser.add_argument('-t','--theme',
                             dest='theme',
                             action='store',
                             type=str,
@@ -89,20 +114,8 @@ def main():
                                  simple
                                  blackonwhite
                             ''')
-
-        parser.add_argument('-address',
-                            dest='dask_address',
-                            action='store',
-                            type=str,
-                            required=True,
-                            help=
-                            '''
-                                dask-distributed scheduler address.
-                                
-                                ie. 127.0.0.1:324597
-                            ''')
-
-        parser.add_argument('-v',
+                            
+        parser.add_argument('-v','--version',
                             action='version',
                             version='ptop {}'.format(__version__))
 
@@ -110,11 +123,12 @@ def main():
 
         # commandline arguments massaging
         theme = (results.theme if results.theme else 'elegant')
-    
+        refresh_rate = results.refresh
+        
         dask_sensor = DaskSensor(name='Dask', dask_address = results.dask_address, sensorType=None, interval=0.5)
         SENSORS_LIST.append(dask_sensor)
 
-        sensor_refresh_rates = {SENSORS_LIST[i]: 1000 for i in range(len(SENSORS_LIST))}
+        sensor_refresh_rates = {SENSORS_LIST[i]: refresh_rate for i in range(len(SENSORS_LIST))}
 
         # TODO ::  Catch the exception of the child thread and kill the application gracefully
         # https://stackoverflow.com/questions/2829329/catch-a-threads-exception-in-the-caller-thread-in-python
