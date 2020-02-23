@@ -404,6 +404,10 @@ class PtopGUI(npyscreen.NPSApp):
         '''
         try:
             disk_info = self.statistics['Disk']['text']['/']
+            dask_memory = self.statistics['Dask']['Memory']
+            dask_cpu    = self.statistics['Dask']['CPU']
+            dask_cluster= self.statistics['Dask']['Cluster']
+            
             swap_info = self.statistics['Memory']['text']['swap_memory']
             memory_info = self.statistics['Memory']['text']['memory']
             processes_info = self.statistics['Process']['text']
@@ -413,32 +417,18 @@ class PtopGUI(npyscreen.NPSApp):
 
             #### Overview information ####
 
-            row1 = "Disk Usage (/) {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Processes{4}{3: <8}".format(disk_info["used"],
-                                                                                                   disk_info["total"],
-                                                                                                   disk_info["percentage"],
-                                                                                                   processes_info["running_processes"],
-                                                                                                   " "*int(4*self.X_SCALING_FACTOR),
-                                                                                                   " "*int(9*self.X_SCALING_FACTOR))
+            row2 = "Workers: {workers: <6} {long_space} Total Threads: {threads: <8}".format(workers=dask_cluster["n_workers"],
+                                                                                          threads=dask_cluster["total_threads"],
+                                                                                          space=" "*int(4*self.X_SCALING_FACTOR),
+                                                                                          long_space=" "*int(9*self.X_SCALING_FACTOR))
 
-            row2 = "Swap Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Threads  {4}{3: <8}".format(swap_info["active"],
-                                                                                                   swap_info["total"],
-                                                                                                   swap_info["percentage"],
-                                                                                                   processes_info["running_threads"],
-                                                                                                   " "*int(4*self.X_SCALING_FACTOR),
-                                                                                                   " "*int(9*self.X_SCALING_FACTOR))
+            row3 = "Memory (used/available)   {space}{used: <6}/{total: >6} MB".format(used = dask_memory['used_memory'],
+                                                                            total = dask_memory['total_memory'],
+                                                                                                   space=" "*int(4*self.X_SCALING_FACTOR),
+                                                                                                   long_space=" "*int(9*self.X_SCALING_FACTOR))
 
-            row3 = "Main Memory    {4}{0: <6}/{1: >6} MB{4}{2: >2} %{5}Boot Time{4}{3: <8} hours".format(memory_info["active"],
-                                                                                                   memory_info["total"],
-                                                                                                   memory_info["percentage"],
-                                                                                                   str(system_info["running_time"]),
-                                                                                                   " "*int(4*self.X_SCALING_FACTOR),
-                                                                                                   " "*int(9*self.X_SCALING_FACTOR))
-            row4 = "Network Speed  {2}{0: <3}↓ {1: <3}↑ MB/s".format(network_info["download_speed_in_mb"],
-                                                                     network_info["upload_speed_in_mb"],
-                                                                     " "*int(4*self.X_SCALING_FACTOR),
-                                                                     " "*int(9*self.X_SCALING_FACTOR))
 
-            self.basic_stats.value = row1 + '\n' + row2 + '\n' + row3 + '\n' + row4
+            self.basic_stats.value = row2 + '\n' + row3
             # Lazy update to GUI
             self.basic_stats.update(clear=True)
 
