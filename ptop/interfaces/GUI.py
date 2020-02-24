@@ -16,100 +16,6 @@ PROCESS_RELEVANCE_SORT = True
 PREVIOUS_TERMINAL_WIDTH = None
 PREVIOUS_TERMINAL_HEIGHT = None
 
-class ProcessDetailsInfoBox(npyscreen.PopupWide):
-    
-    '''
-    This widget is used to who the detailed information about the selected process 
-    in the processes table. Curretly only the port information is shown for a selected
-    process.
-`   '''
-    #Set them to fix the position
-    SHOW_ATX  = 0
-    SHOW_ATY  = 0
-    DEFAULT_COLUMNS = PREVIOUS_TERMINAL_WIDTH
-    
-    def __init__(self,local_ports,process_pid,open_files):
-        self._local_ports = local_ports
-        self._process_pid = process_pid
-        self._open_files = open_files
-        super(ProcessDetailsInfoBox,self).__init__()
-
-    def create(self,**kwargs):
-        ''' 
-            Sub widgets [details_box_heading,details_box] are only shown in GUI if
-            they are created in the create() method
-        '''
-        super(ProcessDetailsInfoBox,self).create()
-        
-        self._logger = logging.getLogger(__name__)
-        self._logger.info("Showing the local ports {0} and files opened and are being used by the process with pid {1}".format(self._local_ports,
-                                                                                         str(self._process_pid)))
-        #logger.info("Showing the local ports {0} and files opened and are being used by the process with pid {1}".format(self._local_ports,str(self._process_pid)))
-                        #             self.details_box_heading = self.add(npyscreen.TitleText, name='No ports used by the process {0}'.format(str(self._process_pid)),)
-        self.details_box_heading = self.add(npyscreen.TitleText, name='Showing info for process with PID {0}'.format(str(self._process_pid)))
-        self.details_box = self.add(npyscreen.BufferPager)
-        if len(self._local_ports) != 0 and len(self._open_files)!= 0:
-            self.details_box.values.extend(['System ports used by the process are:\n'])
-            self.details_box.values.extend(self._local_ports)
-            self.details_box.values.extend('\n')
-            self.details_box.values.extend(['Files opened by this process are:\n'])
-            self.details_box.values.extend('\n')
-            self.details_box.values.extend(self._open_files)
-        elif len(self._open_files) != 0:
-            self.details_box.values.extend(['Files opened by this process are:\n'])
-            self.details_box.values.extend(self._open_files)
-            self.details_box.values.extend('\n')
-            self.details_box.values.extend(['The process is not using any System ports.\n'])
-        elif len(self._local_ports) != 0:
-            self.details_box.values.extend(['System ports used by the process are:\n'])
-            self.details_box.values.extend(self._local_ports)
-            self.details_box.values.extend('\n')
-            self.details_box.values.extend(['No files are opened by this process.\n'])
-        else:
-            self.details_box.values.extend(['No system ports are used and no files are opened by this process.\n'])
-        self.details_box.display()
-
-
-    def adjust_widgets(self):
-        pass
-
-
-
-class ProcessFilterInputBox(npyscreen.Popup):
-    '''
-        Helper widget(input-box) that is used for filtering the processes list 
-        on the basis of entered filtering string in the widget
-    '''
-    def create(self):
-        super(ProcessFilterInputBox, self).create()
-        self.filterbox = self.add(npyscreen.TitleText, name='Filter String:', )
-        self.nextrely += 1
-        self.statusline = self.add(npyscreen.Textfield, color = 'LABEL', editable = False)
-    
-    def updatestatusline(self):
-        '''
-            This updates the status line that displays how many processes in the 
-            processes list are matching to the filtering string
-        '''
-        self.owner_widget._filter = self.filterbox.value
-        total_matches = self.owner_widget.filter_processes()
-        if self.filterbox.value == None or self.filterbox.value == '':
-            self.statusline.value = ''
-        elif total_matches == 0: 
-            self.statusline.value = '(No Matches)'
-        elif total_matches == 1:
-            self.statusline.value = '(1 Match)'
-        else:
-            self.statusline.value = '(%s Matches)' % total_matches
-    
-    def adjust_widgets(self):
-        '''
-            This method is called on any text change in filter box.
-        '''
-        self.updatestatusline()
-        self.statusline.display()
-
-
 class CustomMultiLineAction(npyscreen.MultiLineAction):
     '''
         Making custom MultiLineAction by adding the handlers
@@ -119,12 +25,12 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         self.add_handlers({
             "^N" : self._sort_by_memory,
             "^T" : self._sort_by_time,
-            "^K" : self._kill_process,
+            #"^K" : self._kill_process,
             "^Q" : self._quit,
             "^R" : self._reset,
-            "^H" : self._do_process_filtering_work,
-            "^L" : self._show_detailed_process_info,
-            "^F" : self._do_process_filtering_work
+            #"^H" : self._do_process_filtering_work,
+            #"^L" : self._show_detailed_process_info,
+            #"^F" : self._do_process_filtering_work
         })
         self._filtering_flag = False
         self._logger = logging.getLogger(__name__)
@@ -134,40 +40,7 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
             after chossing one from the processes table
         '''
         self._uncurtailed_process_data = None
-
-    def _get_selected_process_pid(self):
-        '''
-            Parses the process pid from the selected line in the process
-            table
-        '''
-        previous_parsed_text = ""
-        for _ in self.values[self.cursor_line].split():
-            if _ in SYSTEM_USERS:
-                selected_process_pid = int(previous_parsed_text)
-                break
-            else:
-                previous_parsed_text = _
-        return selected_process_pid
-
-    def _get_local_ports_used_by_a_process(self,process_pid):
-        """
-            Given the process_id returns the list of local ports used by
-            the process
-        """
-        for proc in self._uncurtailed_process_data:
-            if proc['id'] == process_pid:
-                return proc['local_ports']
                 
-    def _get_list_of_open_files(self,process_pid):
-        """
-            Given the Process ID, return the list of all the open files
-        """
-        opened_files_by_proces = []
-        p = psutil.Process(process_pid)
-        for i in p.open_files():
-            opened_files_by_proces.append(i[0])
-        return opened_files_by_proces
-
     def _sort_by_time(self,*args,**kwargs):
         # fuck .. that's why NPSManaged was required, i.e you can access the app instance within widgets
         self._logger.info("Sorting the process table by time")
@@ -191,67 +64,8 @@ class CustomMultiLineAction(npyscreen.MultiLineAction):
         PROCESS_RELEVANCE_SORT = True
         self._filtering_flag = False
 
-    def _do_process_filtering_work(self,*args,**kwargs):
-        '''
-            Dynamically instantiate a process filtering box used
-            to offload the process filtering work
-        '''
-        self.process_filtering_helper = ProcessFilterInputBox()
-        self.process_filtering_helper.owner_widget = weakref.proxy(self)
-        self.process_filtering_helper.display()
-        self.process_filtering_helper.edit()
-
-    def _show_detailed_process_info(self,*args,**kwargs):
-        """
-            Display the extra process information. Extra information includes
-            open ports and the opened files list
-        """
-        self._logger.info("Showing process details for the selected process")
-        # This is not working, local_ports information is not getting passed in the 
-        # create method of self._logger = logging.getLogger(__name__)
-        # self.process_details_view_helper = ProcessDetailsInfoBox(local_ports=['1','2','3'])
-        process_pid = self._get_selected_process_pid()
-        local_ports = self._get_local_ports_used_by_a_process(process_pid)
-        open_files = self._get_list_of_open_files(process_pid)
-        self.process_details_view_helper = ProcessDetailsInfoBox(local_ports,process_pid,open_files)
-        self.process_details_view_helper.owner_widget = weakref.proxy(self)
-        self.process_details_view_helper.display()
-        self.process_details_view_helper.edit()
-
-    #_kill_process takes *args, **kwargs
-    def _kill_process(self,*args,**kwargs):
-        # Get the PID of the selected process
-        pid_to_kill = self._get_selected_process_pid()
-        self._logger.info("Terminating process with pid {0}".format(pid_to_kill))
-        try:
-            target = psutil.Process(int(pid_to_kill)) # Handle NoSuchProcessError
-            target.terminate()
-            self._logger.info("Terminated process with pid {0}".format(pid_to_kill))
-        except:
-            self._logger.info("Not able to terminate process with pid: {0}".format(pid_to_kill),
-                              exc_info=True)
-
     def _quit(self,*args,**kwargs):
         raise KeyboardInterrupt
-
-    def filter_processes(self):
-        '''
-            This method is used to filter the processes in the processes table on the 
-            basis of the filtering string entered in the filter box
-            When the user presses OK in the input box widget the value of the processes 
-            table is set to **filtered** processes 
-            It returns the count of the processes matched to the filtering string
-        '''
-        self._logger.info("Filtering processes on the basis of filter : {0}".format(self._filter))
-        match_count = 0
-        filtered_processes = []
-        self._filtering_flag = True
-        for val in self.values:
-            if self._filter in str.lower(val):
-                match_count += 1
-                filtered_processes.append(val)
-        self.values = filtered_processes
-        return match_count
 
     def is_filtering_on(self):
         return self._filtering_flag
@@ -450,6 +264,7 @@ class PtopGUI(npyscreen.NPSApp):
             #### Processes table ####
 
             self._processes_data = self.statistics['Process']['table']
+            self._processes_data = self.statistics['Dask']['Workers']
 
             # check sorting flags
             if MEMORY_SORT:
@@ -466,17 +281,32 @@ class PtopGUI(npyscreen.NPSApp):
                 self._logger.info("Resetting the sorting behavior")
 
             # to keep things pre computed
+            # curtailed_processes_data = []
+            # for proc in sorted_processes_data:
+            #     curtailed_processes_data.append("{0: <30} {1: >5}{6}{2: <10}{6}{3}% {6}{4: >6.2f}{6}{5}\
+            #     ".format( (proc['address'][:25] + '...') if len(proc['address']) > 25 else proc['address'], # 0
+            #                proc['nthreads'], # 1
+            #                proc['user'], # 2
+            #                proc['cpu'],  # 3
+            #                proc['memory'], # 4
+            #                proc['memory_limit'], # 5 
+            #                " "*int(5*self.X_SCALING_FACTOR)) # 6
+            #     )
+                
+            # to keep things pre computed
             curtailed_processes_data = []
             for proc in sorted_processes_data:
-                curtailed_processes_data.append("{0: <30} {1: >5}{6}{2: <10}{6}{3}{6}{4: >6.2f} % {6}{5}\
-                ".format( (proc['name'][:25] + '...') if len(proc['name']) > 25 else proc['name'],
-                           proc['id'],
-                           proc['user'],
-                           proc['time'],
-                           proc['memory'],
-                           proc['local_ports'],
-                           " "*int(5*self.X_SCALING_FACTOR))
-                )
+                curtailed_processes_data.append("{address}{space}{nthreads}{space}{cpu} % {space}{memory}/{memory_limit}{space}{read}/{write}\
+                ".format( address = (proc['address'][:25] + '...') if len(proc['address']) > 25 else proc['address'], # 0
+                          nthreads = proc['nthreads'], # 1
+                          cpu =  proc['cpu'],  # 3
+                          memory =   proc['memory'], # 4
+                          memory_limit =  proc['memory_limit'], # 5 
+                          read         = proc['read'],
+                          write        = proc['write'],
+                          space=  " "*int(5*self.X_SCALING_FACTOR)) # 6
+                )    
+            
             if not self.processes_table.entry_widget.is_filtering_on():
                 self.processes_table.entry_widget.values =  curtailed_processes_data
             # Set the processes data dictionary to uncurtailed processes data
@@ -600,7 +430,7 @@ class PtopGUI(npyscreen.NPSApp):
                                                                                                 PROCESSES_INFO_WIDGET_REL_Y+PROCESSES_INFO_WIDGET_HEIGHT)
                                                                                                 )
         self.processes_table = self.window.add(MultiLineActionWidget,
-                                               name="Processes ( name - PID - user - age - memory - system_ports )",
+                                               name="Workers ( address - nthreads - cpu % - memory used/total MB - read/write MB )",
                                                relx=PROCESSES_INFO_WIDGET_REL_X,
                                                rely=PROCESSES_INFO_WIDGET_REL_Y,
                                                max_height=PROCESSES_INFO_WIDGET_HEIGHT,
@@ -623,7 +453,8 @@ class PtopGUI(npyscreen.NPSApp):
                                        relx=ACTIONS_WIDGET_REL_X,
                                        rely=ACTIONS_WIDGET_REL_Y
                                        )
-        self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter\t\t^L:Process Info"
+        #self.actions.value = "^K:Kill\t\t^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\tg:Top\t\t^Q:Quit\t\t^F:Filter\t\t^L:Process Info"
+        self.actions.value = "^N:Memory Sort\t\t^T:Time Sort\t\t^R:Reset\t\t^Q:Quit"
         self.actions.display()
         self.actions.editable = False
 
