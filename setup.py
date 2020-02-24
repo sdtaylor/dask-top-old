@@ -56,7 +56,6 @@ setup(
 
     install_requires=[
         "npyscreen>=4.10.5",
-        "psutil>=3.0.1",
         "argparse>=1.2.1",
         "certifi>=2018.10.15",
         "chardet>=3.0.4",

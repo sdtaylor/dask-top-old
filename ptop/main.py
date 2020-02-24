@@ -11,9 +11,10 @@ import platform
 from ptop import __version__, _log_file
 from ptop.statistics import Statistics
 from ptop.interfaces import PtopGUI
-from ptop.plugins import SENSORS_LIST
 from ptop.constants import SUPPORTED_THEMES
 from huepy import *
+
+from ptop.plugins.dask_sensor import DaskSensor
 
 # Backwards compatibility for string input operation
 try:
@@ -71,7 +72,32 @@ def main():
 
         # command line argument parsing
         parser = argparse.ArgumentParser(description='ptop argument parser')
-        parser.add_argument('-t',
+        
+        parser.add_argument('-a','--address',
+                            dest='dask_address',
+                            action='store',
+                            type=str,
+                            required=True,
+                            help=
+                            '''
+                                dask-distributed scheduler address.
+                                
+                                ie. 127.0.0.1:324597
+                            ''')
+
+        parser.add_argument('-r','--refresh',
+                            dest='refresh',
+                            action='store',
+                            type=float,
+                            default=500,
+                            required=False,
+                            help=
+                            '''
+                                Refresh rate in milliseconds
+                                Default 500
+                            ''')
+                            
+        parser.add_argument('-t','--theme',
                             dest='theme',
                             action='store',
                             type=str,
@@ -87,77 +113,8 @@ def main():
                                  simple
                                  blackonwhite
                             ''')
-
-        parser.add_argument('-csrt',
-                            dest='csrt',
-                            action='store',
-                            type=float,
-                            required=False,
-                            help=
-                            '''
-                                CPU sensor response time;
-        						update interval in
-        						milli seconds less than 1000.
-        						For example 500
-                            ''')
-
-        parser.add_argument('-dsrt',
-                            dest='dsrt',
-                            action='store',
-                            type=float,
-                            required=False,
-                            help=
-                            '''
-                                Disk sensor response time;
-                                Input sensor
-        						update interval in
-        						milli seconds less than 1000.
-        						For example 500
-                            ''')
-
-        parser.add_argument('-msrt',
-                            dest='msrt',
-                            action='store',
-                            type=float,
-                            required=False,
-                            help=
-                            '''
-                                Memory sensor response time;
-                                Input sensor
-        						update interval in
-        						milli seconds less than 1000.
-        						For example 500
-                            ''')
-
-        parser.add_argument('-psrt',
-                            dest='psrt',
-                            action='store',
-                            type=float,
-                            required=False,
-                            help=
-                            '''
-                                Process sensor response time;
-                                Input sensor
-        						update interval in
-        						milli seconds less than 1000.
-        						For example 500
-                            ''')
-
-        parser.add_argument('-ssrt',
-                            dest='ssrt',
-                            action='store',
-                            type=float,
-                            required=False,
-                            help=
-                            '''
-                                System sensor response time;
-                                Input sensor
-        						update interval in
-        						milli seconds less than 1000.
-        						For example 500
-                            ''')
-        
-        parser.add_argument('-v',
+                            
+        parser.add_argument('-v','--version',
                             action='version',
                             version='ptop {}'.format(__version__))
 
@@ -165,23 +122,12 @@ def main():
 
         # commandline arguments massaging
         theme = (results.theme if results.theme else 'elegant')
-        csrt = (results.csrt if results.csrt else 1000)
-        csrt = (1000 if csrt>1000 else csrt)
-        dsrt = (results.dsrt if results.dsrt else 1000)
-        dsrt = (1000 if dsrt>1000 else dsrt)
-        msrt = (results.msrt if results.msrt else 1000)
-        msrt = (1000 if msrt>1000 else msrt)
-        psrt = (results.psrt if results.psrt else 1000)
-        psrt = (1000 if psrt>1000 else psrt)
-        ssrt = (results.ssrt if results.ssrt else 1000)
-        ssrt = (1000 if ssrt>1000 else ssrt)
-        nsrt = 1000 # network sensor rate is always 1 second
-    
-        srts = [csrt, dsrt, msrt, nsrt, psrt, ssrt]
-        sensor_refresh_rates = {SENSORS_LIST[i]: srts[i] for i in range(len(SENSORS_LIST))}
+        refresh_rate = results.refresh
+        
+        dask_sensor = DaskSensor(name='Dask', dask_address = results.dask_address, sensorType=None, interval=0.5)
+        SENSORS_LIST = [dask_sensor]
 
-        # try to update ptop
-        _update()
+        sensor_refresh_rates = {SENSORS_LIST[i]: refresh_rate for i in range(len(SENSORS_LIST))}
 
         # TODO ::  Catch the exception of the child thread and kill the application gracefully
         # https://stackoverflow.com/questions/2829329/catch-a-threads-exception-in-the-caller-thread-in-python
