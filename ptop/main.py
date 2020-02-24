@@ -11,7 +11,6 @@ import platform
 from ptop import __version__, _log_file
 from ptop.statistics import Statistics
 from ptop.interfaces import PtopGUI
-from ptop.plugins import SENSORS_LIST
 from ptop.constants import SUPPORTED_THEMES
 from huepy import *
 
@@ -126,7 +125,7 @@ def main():
         refresh_rate = results.refresh
         
         dask_sensor = DaskSensor(name='Dask', dask_address = results.dask_address, sensorType=None, interval=0.5)
-        SENSORS_LIST.append(dask_sensor)
+        SENSORS_LIST = [dask_sensor]
 
         sensor_refresh_rates = {SENSORS_LIST[i]: refresh_rate for i in range(len(SENSORS_LIST))}
 

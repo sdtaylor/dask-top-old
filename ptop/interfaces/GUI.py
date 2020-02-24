@@ -217,17 +217,9 @@ class PtopGUI(npyscreen.NPSApp):
             and but now is getting called automatically in while_waiting
         '''
         try:
-            disk_info = self.statistics['Disk']['text']['/']
             dask_memory = self.statistics['Dask']['Memory']
             dask_cpu    = self.statistics['Dask']['CPU']
             dask_cluster= self.statistics['Dask']['Cluster']
-            
-            swap_info = self.statistics['Memory']['text']['swap_memory']
-            memory_info = self.statistics['Memory']['text']['memory']
-            processes_info = self.statistics['Process']['text']
-            system_info = self.statistics['System']['text']
-            cpu_info = self.statistics['CPU']['graph']
-            network_info = self.statistics['Network']['text']
 
             #### Overview information ####
 
@@ -261,9 +253,8 @@ class PtopGUI(npyscreen.NPSApp):
             self.memory_chart.value = self.draw_chart(memory_canvas,next_peak_height,'memory')
             self.memory_chart.update(clear=True)
 
-            #### Processes table ####
+            #### Worker table ####
 
-            self._processes_data = self.statistics['Process']['table']
             self._processes_data = self.statistics['Dask']['Workers']
 
             # check sorting flags
