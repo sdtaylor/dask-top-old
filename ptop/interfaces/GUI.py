@@ -4,7 +4,7 @@
 '''
 
 import npyscreen, math, drawille
-import psutil, logging, weakref, sys
+import logging, weakref, sys
 from ptop.utils import ThreadJob
 from ptop.constants import SYSTEM_USERS, SUPPORTED_THEMES
 
